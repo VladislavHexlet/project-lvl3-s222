@@ -1,0 +1,26 @@
+{
+  "name": "project3hexlet",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VladislavHexlet/project-lvl3-s222.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VladislavHexlet/project-lvl3-s222/issues"
+  },
+  "homepage": "https://github.com/VladislavHexlet/project-lvl3-s222#readme",
+  "devDependencies": {
+    "eslint": "^4.15.0",
+    "eslint-config-airbnb-base": "*",
+    "eslint-plugin-import": "*",
+    "eslint-plugin-flowtype": "*",
+    "eslint-plugin-jest": "*"
+  }
+}
