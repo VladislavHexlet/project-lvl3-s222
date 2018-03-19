@@ -4,9 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test": "jest",
     "babel-node": "babel-node",
+    "flow": "flow",
+    "flow-typed": "flow-typed",
+    "gulp": "gulp",
     "eslint": "eslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "webpack": "webpack",
+    "start": "webpack"
   },
   "repository": {
     "type": "git",
