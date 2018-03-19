@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "babel-node": "babel-node",
+    "eslint": "eslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,11 +18,27 @@
     "url": "https://github.com/VladislavHexlet/project-lvl3-s222/issues"
   },
   "homepage": "https://github.com/VladislavHexlet/project-lvl3-s222#readme",
+  "dependencies": {
+    "babel-loader": "^7.1.4",
+    "babel-plugin-syntax-dynamic-import": "*",
+    "webpack": "^4.1.1",
+    "webpack-cli": "*",
+    "webpack-merge": "*"
+  },
   "devDependencies": {
+    "babel-eslint": "*",
+    "babel-preset-env": "*",
+    "babel-preset-flow": "*",
+    "babel-preset-stage-0": "*",
+    "debug": "^3",
     "eslint": "^4.15.0",
     "eslint-config-airbnb-base": "*",
     "eslint-plugin-import": "*",
     "eslint-plugin-flowtype": "*",
-    "eslint-plugin-jest": "*"
+    "eslint-plugin-jest": "*",
+    "flow-bin": "^0.67",
+    "flow-typed": "*",
+    "jest": "^22",
+    "jest-cli": "^22"
   }
 }
