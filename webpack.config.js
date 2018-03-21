@@ -8,7 +8,9 @@ module.exports = {
     filename: 'bundle.js',
   },
   plugins: [
-    new HtmlWebpackPlugin(),
+    new HtmlWebpackPlugin({
+      template: './src/index.html',
+    }),
   ],
   module: {
     rules: [
@@ -18,6 +20,31 @@ module.exports = {
           'style-loader',
           'css-loader',
         ],
+      },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            cacheDirectory: true,
+            presets: [
+              'flow',
+              ['env', {
+                modules: false,
+                targets: {
+                  browsers: '> 0%',
+                  uglify: true,
+                },
+                useBuiltIns: true,
+              }],
+            ],
+
+            plugins: [
+              'syntax-dynamic-import',
+            ],
+          },
+        },
       },
     ],
   },

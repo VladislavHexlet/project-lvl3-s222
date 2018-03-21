@@ -23,11 +23,13 @@
   },
   "homepage": "https://github.com/VladislavHexlet/project-lvl3-s222#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "babel-loader": "^7.1.4",
     "babel-plugin-syntax-dynamic-import": "*",
     "bootstrap": "^4.0.0",
     "jquery": "^3.3.1",
     "popper.js": "^1.14.1",
+    "validator": "^9.4.1",
     "webpack": "^4.1.1",
     "webpack-cli": "*",
     "webpack-merge": "*"
