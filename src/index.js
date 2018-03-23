@@ -5,14 +5,18 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.min';
 import './style.css';
 
-let userInput = '';
-const feedData = {};
+const state = {
+  form: { userInput: '', isValid: false },
+  visitedLinks: [],
+  currentTableId: 0,
+  feedData: {},
+};
 
-const validateUserInput = (inputEl) => {
-  if (isURL(userInput) || userInput.length === 0) {
-    inputEl.classList.remove('is-invalid');
+const validateUserInput = (userInput) => {
+  if (isURL(userInput)) {
+    state.form.isValid = true;
   } else {
-    inputEl.classList.add('is-invalid');
+    state.form.isValid = false;
   }
 };
 
@@ -32,8 +36,10 @@ const createModalButton = () => {
   return button;
 };
 
-const processingNewsArticles = (titleOfRssChannel, articles) => {
-  const table = document.body.querySelector('#news-articles');
+const createNewsArticlesTable = (titleOfRssChannel) => {
+  const table = document.createElement('table');
+  table.setAttribute('id', `id-${state.currentTableId}`);
+  table.setAttribute('class', 'table');
   const tBody = document.createElement('tBody');
   const titleTr = document.createElement('tr');
   const titleTh = document.createElement('th');
@@ -41,70 +47,158 @@ const processingNewsArticles = (titleOfRssChannel, articles) => {
   tBody.append(titleTr);
   titleTr.append(titleTh);
   titleTh.append(titleOfRssChannel);
+
+  state.currentTableId += 1;
+  return table;
+};
+
+const addDescriptionForArticle = (button, articleDescription) => {
+  $(button).on('click', () => {
+    $('.modal-body').text(articleDescription);
+  });
+};
+
+const createArticleTrElement = (article, button) => {
+  const articleTr = document.createElement('tr');
+  const articleTd = document.createElement('td');
+  const articleA = document.createElement('a');
+  const articleTitle = article.querySelector('title').textContent;
+  const articleLink = article.querySelector('link').textContent;
+
+  articleTr.append(articleTd);
+  articleTd.append(articleA);
+  articleTd.append(button);
+  articleA.append(articleTitle);
+  articleA.setAttribute('href', articleLink);
+
+  return articleTr;
+};
+
+const prepareArticleForAddingToTable = (article) => {
+  let articleDescription;
+  const descriptionEl = article.querySelector('description');
+  if (!descriptionEl) {
+    articleDescription = 'No Description';
+  } else {
+    articleDescription = descriptionEl.textContent;
+  }
+  const button = createModalButton();
+  const articleTr = createArticleTrElement(article, button);
+  addDescriptionForArticle(button, articleDescription);
+  return articleTr;
+};
+
+const addNewsArticlesToDom = (feed) => {
+  const titleOfRssChannel = feed.querySelector('title').textContent;
+  const articles = [...feed.querySelectorAll('item')];
+  const jubmotron = document.body.querySelector('.jumbotron');
+  const table = createNewsArticlesTable(titleOfRssChannel);
+  jubmotron.append(table);
   articles.forEach((article) => {
-    const articleTr = document.createElement('tr');
-    const articleTd = document.createElement('td');
-    const articleA = document.createElement('a');
-    const articleTitle = article.querySelector('title').textContent;
-    const articleLink = article.querySelector('link').textContent;
-    const articleDescription = article.querySelector('description').textContent;
-    const button = createModalButton();
-    $(button).on('click', () => {
-      $('.modal-body').text(articleDescription);
-    });
-    articleTr.append(articleTd);
-    articleTd.append(articleA);
-    articleTd.append(button);
-    articleA.append(articleTitle);
-    articleA.setAttribute('href', articleLink);
+    const articleTr = prepareArticleForAddingToTable(article);
     table.append(articleTr);
   });
 };
 
-const xmlProcessing = (xml) => {
-  const mainTitle = xml.querySelector('title').textContent;
-  if (!(mainTitle in feedData)) {
-    let mainDescription = xml.querySelector('description').textContent;
-    if (!(mainDescription)) {
-      mainDescription = 'No Description';
-    }
-    const tr = document.createElement('tr');
-    const tdTitle = document.createElement('td');
-    const tdDescription = document.createElement('td');
-    const table = document.querySelector('#main-feed-table');
-
-    tdTitle.append(mainTitle);
-    tdDescription.append(mainDescription);
-    tr.append(tdTitle, tdDescription);
-    table.append(tr);
-
-    const articles = [...xml.querySelectorAll('item')];
-    feedData[mainTitle] = articles;
-    processingNewsArticles(mainTitle, articles);
+const addFeedToDom = (feed) => {
+  const title = feed.querySelector('title').textContent;
+  let description = feed.querySelector('description').textContent;
+  if (!(description)) {
+    description = 'No Description';
   }
+  const tr = document.createElement('tr');
+  const tdElTitle = document.createElement('td');
+  const tdElDescription = document.createElement('td');
+  tdElTitle.append(title);
+  tdElDescription.append(description);
+  tr.append(tdElTitle, tdElDescription);
+
+  const table = document.querySelector('#main-feed-table');
+  table.append(tr);
+};
+
+const addFeedToState = (feed) => {
+  const title = feed.querySelector('title').textContent;
+  const articles = [...feed.querySelectorAll('item')];
+  const setOfNewsLinks = new Set();
+
+  articles.forEach((article) => {
+    const link = article.querySelector('link').textContent;
+    setOfNewsLinks.add(link);
+  });
+  state.feedData[title] = { id: state.currentTableId, setOfNewsLinks };
+};
+
+const checkNewsUpdates = () => {
+  state.visitedLinks.forEach((link) => {
+    axios.get(link)
+      .then((response) => {
+        const feed = parseXML(response.data);
+        const newArticles = [...feed.querySelectorAll('item')];
+        const title = feed.querySelector('title').textContent;
+        const idOfNewsTable = state.feedData[title].id;
+        const newsTable = document.querySelector(`#id-${idOfNewsTable}`);
+
+        newArticles.forEach((newArticle) => {
+          const linkOfNewArticle = newArticle.querySelector('link').textContent;
+          if (!state.feedData[title].setOfNewsLinks.has(linkOfNewArticle)) {
+            state.feedData[title].setOfNewsLinks.add(linkOfNewArticle);
+            const articleTr = prepareArticleForAddingToTable(newArticle);
+            const tbody = newsTable.querySelector('tbody');
+            tbody.after(articleTr);
+          }
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  });
 };
 
 const button = document.body.querySelector('button');
 const textInput = document.body.querySelector('input');
 
 textInput.addEventListener('input', (event) => {
-  userInput = event.target.value;
+  state.form.userInput = event.target.value;
+  validateUserInput(state.form.userInput);
+
   const inputEl = event.target;
-  validateUserInput(inputEl);
+  if (state.form.isValid || state.form.userInput.length === 0) {
+    inputEl.classList.remove('is-invalid');
+  } else {
+    inputEl.classList.add('is-invalid');
+  }
 });
 
 button.addEventListener('click', (e) => {
   e.preventDefault();
-  if (isURL(userInput)) {
+  if (state.form.isValid) {
     textInput.value = '';
 
-    axios.get(userInput)
-      .then((response) => {
-        const xml = parseXML(response.data);
-        xmlProcessing(xml);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    if (!state.visitedLinks.includes(state.form.userInput)) {
+      axios.get(state.form.userInput)
+        .then((response) => {
+          state.visitedLinks = state.visitedLinks.concat(state.form.userInput);
+
+          const feed = parseXML(response.data);
+          addFeedToDom(feed);
+          addFeedToState(feed);
+          addNewsArticlesToDom(feed);
+          state.form.userInput = '';
+          state.form.isValid = false;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   }
 });
+
+const checkNewsUpdatesWrapper = () => {
+  checkNewsUpdates();
+  setTimeout(checkNewsUpdatesWrapper, 5000);
+};
+
+setTimeout(() => {
+  checkNewsUpdatesWrapper();
+}, 5000);
