@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.min';
 import './style.css';
 
+
 const state = {
   form: { userInput: '', isValid: false },
   visitedLinks: [],
@@ -129,33 +130,32 @@ const addFeedToState = (feed) => {
   state.feedData[title] = { id: state.currentTableId, setOfNewsLinks };
 };
 
-const checkNewsUpdates = () => {
-  state.visitedLinks.forEach((link) => {
-    axios.get(link)
-      .then((response) => {
-        const feed = parseXML(response.data);
-        const newArticles = [...feed.querySelectorAll('item')];
-        const title = feed.querySelector('title').textContent;
-        const idOfNewsTable = state.feedData[title].id;
-        const newsTable = document.querySelector(`#id-${idOfNewsTable}`);
+const checkNewsUpdates = (link) => {
+  const promiseObj = axios.get(link)
+    .then((response) => {
+      const feed = parseXML(response.data);
+      const newArticles = [...feed.querySelectorAll('item')];
+      const title = feed.querySelector('title').textContent;
+      const idOfNewsTable = state.feedData[title].id;
+      const newsTable = document.querySelector(`#id-${idOfNewsTable}`);
 
-        newArticles.forEach((newArticle) => {
-          const linkOfNewArticle = newArticle.querySelector('link').textContent;
-          if (!state.feedData[title].setOfNewsLinks.has(linkOfNewArticle)) {
-            state.feedData[title].setOfNewsLinks.add(linkOfNewArticle);
-            const articleTr = prepareArticleForAddingToTable(newArticle);
-            const tbody = newsTable.querySelector('tbody');
-            tbody.after(articleTr);
-          }
-        });
-      })
-      .catch((error) => {
-        console.log(error);
+      newArticles.forEach((newArticle) => {
+        const linkOfNewArticle = newArticle.querySelector('link').textContent;
+        if (!state.feedData[title].setOfNewsLinks.has(linkOfNewArticle)) {
+          state.feedData[title].setOfNewsLinks.add(linkOfNewArticle);
+          const articleTr = prepareArticleForAddingToTable(newArticle);
+          const tbody = newsTable.querySelector('tbody');
+          tbody.after(articleTr);
+        }
       });
-  });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  return promiseObj;
 };
 
-const button = document.body.querySelector('button');
+const form = document.body.querySelector('#main-form');
 const textInput = document.body.querySelector('input');
 
 textInput.addEventListener('input', (event) => {
@@ -170,7 +170,7 @@ textInput.addEventListener('input', (event) => {
   }
 });
 
-button.addEventListener('click', (e) => {
+form.addEventListener('submit', (e) => {
   e.preventDefault();
   if (state.form.isValid) {
     textInput.value = '';
@@ -193,12 +193,9 @@ button.addEventListener('click', (e) => {
     }
   }
 });
-
 const checkNewsUpdatesWrapper = () => {
-  checkNewsUpdates();
-  setTimeout(checkNewsUpdatesWrapper, 5000);
+  Promise.all(state.visitedLinks.map(checkNewsUpdates))
+    .then(() => setTimeout(checkNewsUpdatesWrapper, 5000));
 };
 
-setTimeout(() => {
-  checkNewsUpdatesWrapper();
-}, 5000);
+checkNewsUpdatesWrapper();
