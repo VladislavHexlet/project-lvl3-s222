@@ -131,7 +131,7 @@ const addFeedToState = (feed) => {
 };
 
 const checkNewsUpdates = (link) => {
-  const promiseObj = axios.get(link)
+  const request = axios.get(link)
     .then((response) => {
       const feed = parseXML(response.data);
       const newArticles = [...feed.querySelectorAll('item')];
@@ -152,7 +152,7 @@ const checkNewsUpdates = (link) => {
     .catch((error) => {
       console.log(error);
     });
-  return promiseObj;
+  return request;
 };
 
 const form = document.body.querySelector('#main-form');
